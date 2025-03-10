@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { nanoid } from 'nanoid';
 import { ResetToken } from './schemas/password-reset-token.schema';
 import { MailService } from 'src/services/mail.service';
+import { RolesService } from 'src/roles/roles.service';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +22,7 @@ export class AuthService {
         @InjectModel(ResetToken.name) private ResetTokenModel: Model<ResetToken>,
         private jwtService: JwtService,
         private mailService: MailService,
+        private roleService: RolesService,
     ) { }
     async signUp(signupData: SignupDto) {
         const { email, password, name } = signupData;
@@ -149,5 +151,16 @@ export class AuthService {
         await this.RefreshTokenModel.updateOne({ userId }, { $set: { expiryDate, token } }, {
             upsert: true,
         })
+    }
+
+
+    async getUserPermissions(userId: string) {
+        const user = await this.UserModel.findById(userId);
+        if (!user) throw new BadRequestException("User not found");
+
+        const role = await this.roleService.getRoleById(user.roleId.toString());
+        if(!role) throw new BadRequestException("Role not found");
+        
+        return role.permissions;
     }
 }
