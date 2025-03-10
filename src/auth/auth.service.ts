@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { SignupDto } from './dtos/signup.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
@@ -8,6 +8,9 @@ import { LoginDto } from './dtos/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { RefreshToken } from './schemas/refresh-token.schema';
 import { v4 as uuidv4 } from 'uuid';
+import { nanoid } from 'nanoid';
+import { ResetToken } from './schemas/password-reset-token.schema';
+import { MailService } from 'src/services/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -15,7 +18,9 @@ export class AuthService {
     constructor(
         @InjectModel(User.name) private UserModel: Model<User>,
         @InjectModel(RefreshToken.name) private RefreshTokenModel: Model<RefreshToken>,
+        @InjectModel(ResetToken.name) private ResetTokenModel: Model<ResetToken>,
         private jwtService: JwtService,
+        private mailService: MailService,
     ) { }
     async signUp(signupData: SignupDto) {
         const { email, password, name } = signupData;
@@ -67,6 +72,61 @@ export class AuthService {
         }
 
         return this.generateUserTokens(token.userId)
+    }
+
+    async changePassword(userId, oldPassword: string, newPassword: string) {
+        const user = await this.UserModel.findById(userId);
+        if (!user) {
+            throw new UnauthorizedException("User not found");
+        }
+
+        const passwordMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!passwordMatch) {
+            throw new UnauthorizedException("Wrong credentials");
+        }
+
+        const newHashedPassword = await bcrypt.hash(newPassword, 10)
+        user.password = newHashedPassword;
+        await user.save();
+    }
+    async forgotPassword(email: string) {
+        const user = await this.UserModel.findOne({ email });
+
+        if (user) {
+            const expiryDate = new Date();
+            expiryDate.setHours(expiryDate.getHours() + 1)
+
+            const resetToken = nanoid(64)
+            await this.ResetTokenModel.create({
+                token: resetToken,
+                userId: user._id,
+                expiryDate
+            });
+
+            this.mailService.sendPasswordResetEmail(email, resetToken)
+        }
+
+        return { message: 'If this use exists. they will receive an email.' }
+    }
+
+    async resetPassword(newPassword: string, resetToken: string) {
+        const token = await this.ResetTokenModel.findOneAndDelete({
+            token: resetToken,
+            expiryDate: { $gte: new Date() },
+        })
+
+        if (!token) {
+            throw new UnauthorizedException("Invalid link");
+        }
+
+        const user = await this.UserModel.findById(token.userId);
+        if (!user) {
+            throw new InternalServerErrorException("Invalid user");
+        }
+        user.password = await bcrypt.hash(newPassword, 10);
+        await user.save();
+
+        return { message: "Successfully changed password" }
     }
 
     async generateUserTokens(userId) {
