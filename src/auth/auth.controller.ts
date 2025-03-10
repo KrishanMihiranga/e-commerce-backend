@@ -4,9 +4,9 @@ import { SignupDto } from './dtos/signup.dto';
 import { LoginDto } from './dtos/login.dto';
 import { RefreshTokenDto } from './dtos/refresh-tokens.dto';
 import { ChangePasswordDto } from './dtos/change-password.dto';
-import { AuthGuard } from 'src/guards/auth.guard';
 import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
+import { AuthenticationGuard } from 'src/guards/authentication.guard';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
@@ -26,7 +26,7 @@ export class AuthController {
     return this.authService.refreshTokens(refreshTokenDto.refreshToken)
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthenticationGuard)
   @Put('change-password')
   async changePassword(@Body() changePasswordDto: ChangePasswordDto, @Req() req) {
     return this.authService.changePassword(

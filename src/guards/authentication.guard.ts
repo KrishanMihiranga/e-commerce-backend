@@ -4,7 +4,7 @@ import { Request } from "express";
 import { Observable } from "rxjs";
 
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class AuthenticationGuard implements CanActivate {
     constructor(private jwtService: JwtService) { }
 
     canActivate(
@@ -20,7 +20,7 @@ export class AuthGuard implements CanActivate {
             const payload = this.jwtService.verify(token);
             request.userId = payload.userId;
         } catch (err) {
-            Logger.error(err);
+            Logger.error(err.message);
             throw new UnauthorizedException('Invalid Token');
         }
 

@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { RolesModule } from './roles/roles.module';
 import config from './config/config';
 
 @Module({
@@ -32,7 +33,9 @@ import config from './config/config';
       inject: [ConfigService],
     }),
 
-    AuthModule],
+    AuthModule,
+
+    RolesModule],
   controllers: [AppController],
   providers: [AppService],
 })

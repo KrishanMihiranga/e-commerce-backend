@@ -1,16 +1,17 @@
 import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
-import { AuthGuard } from './guards/auth.guard';
+import { Permissions } from './decorators/permissions.decorators';
+import { Resource } from './roles/enums/resource.enum';
+import { Action } from './roles/enums/action.enum';
+import { AuthenticationGuard } from './guards/authentication.guard';
+import { AuthorizationGuard } from './guards/authorization.guard';
 
-@UseGuards(AuthGuard)
-@Controller()
+@UseGuards(AuthenticationGuard, AuthorizationGuard)
+@Controller('/products')
 export class AppController {
   constructor(private readonly appService: AppService) { }
 
-  // @Get()
-  // getHello(): string {
-  //   return this.appService.getHello();
-  // }
+  @Permissions([{ resource: Resource.products, actions: [Action.read] }])
   @Get()
   someProtectedRoute(@Req() req) {
     return { message: 'Accesses resource', userId: req.userId }
