@@ -20,7 +20,9 @@ export class AuthorizationGuard implements CanActivate {
             PERMISSIONS_KEY,
             [context.getHandler(), context.getClass()]
         )
-
+        if (!routePermissions) {
+            return true;
+        }
 
         try {
             const userPermissions = await this.authService.getUserPermissions(request.userId)
