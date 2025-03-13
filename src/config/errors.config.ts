@@ -19,6 +19,11 @@ const errors = {
         message: 'Color Already Exists',
         code: 'BAD_REQUEST'
     },
+    sizeAlreadyExists: {
+        statusCode: 400,
+        message: 'Size Already Exists',
+        code: 'BAD_REQUEST'
+    },
     ProductAlreadyExists: {
         statusCode: 400,
         message: 'Product Already Exists',
@@ -27,6 +32,11 @@ const errors = {
     colorNotFound: {
         statusCode: 404,
         message: 'Color Not Found',
+        code: 'NOT_FOUND'
+    },
+    sizeNotFound: {
+        statusCode: 404,
+        message: 'Size Not Found',
         code: 'NOT_FOUND'
     },
     productImagesRequired: {
