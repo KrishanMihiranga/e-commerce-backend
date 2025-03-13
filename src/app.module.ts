@@ -8,6 +8,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RolesModule } from './roles/roles.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ColorsModule } from './colors/colors.module';
+import { StockModule } from './stock/stock.module';
 import config from './config/config';
 
 @Module({
@@ -38,7 +39,8 @@ import config from './config/config';
     AuthModule,
     RolesModule,
     CategoriesModule,
-    ColorsModule],
+    ColorsModule,
+    StockModule],
   controllers: [AppController],
   providers: [AppService, Logger],
 })
