@@ -1,16 +1,31 @@
-import { IsString, IsNumber, IsBoolean, IsArray, ValidateNested } from "class-validator";
+import { IsString, IsNumber, IsBoolean, IsArray, ValidateNested, Min } from "class-validator";
 import { Type } from "class-transformer";
 
 
-class ImagesProps {
-    @IsString()
-    colorKey:string
-
+class UrlProps {
     @IsString()
     url: string;
-
     @IsBoolean()
     isCover: boolean;
+}
+class ProductDetailProps {
+    @IsString()
+    colorKey: string
+
+    @IsArray()
+    urls: UrlProps[];
+   
+
+    @IsArray()
+    @IsString({ each: true })
+    Sizes: string[];
+
+    @IsNumber()
+    Qty: number;
+
+    @IsNumber()
+    @Min(1)
+    Price: number;
 }
 
 export class StockDto {
@@ -19,24 +34,14 @@ export class StockDto {
 
     @IsArray()
     @ValidateNested({ each: true })
-    @Type(() => ImagesProps)
-    Images: ImagesProps[];
+    @Type(() => ProductDetailProps)
+    ProductDetails: ProductDetailProps[];
 
     @IsString()
     mainCategoryKey: string;
 
     @IsString()
     subCategoryKey: string;
-
-    @IsNumber()
-    Price: number;
-
-    @IsArray()
-    @IsString({ each: true })
-    Sizes: string[];
-
-    @IsNumber()
-    Qty: number;
 
     @IsString()
     Description: string;
