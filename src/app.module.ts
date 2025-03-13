@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -6,6 +6,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RolesModule } from './roles/roles.module';
+import { CategoriesModule } from './categories/categories.module';
+import { ColorsModule } from './colors/colors.module';
 import config from './config/config';
 
 @Module({
@@ -34,9 +36,10 @@ import config from './config/config';
     }),
 
     AuthModule,
-
-    RolesModule],
+    RolesModule,
+    CategoriesModule,
+    ColorsModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, Logger],
 })
 export class AppModule { }
