@@ -3,11 +3,13 @@ import { Document } from "mongoose";
 
 
 @Schema()
-export class SubCategories extends Document {
+export class ProductColors extends Document {
     @Prop({ required: true, unique: true })
     key: string;
     @Prop({ required: true })
     name: string;
+    @Prop({ required: true })
+    hex: string;
 }
 
-export const SubCategoriesSchema = SchemaFactory.createForClass(SubCategories);
+export const ProductColorsSchema = SchemaFactory.createForClass(ProductColors);

@@ -4,7 +4,7 @@ import { Document } from "mongoose";
 
 @Schema()
 export class Categories extends Document {
-    @Prop({ required: true })
+    @Prop({ required: true, unique:true })
     key: string;
     @Prop({ required: true })
     name: string;

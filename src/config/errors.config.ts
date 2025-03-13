@@ -13,10 +13,22 @@ const errors = {
     },
     categoryAlreadyExists: {
         statusCode: 400,
-        message: 'category Already Exists',
+        message: 'Category Already Exists',
         error: 'Bad Request',
         code: 'BAD_REQUEST'
-    }
+    },
+    colorAlreadyExists: {
+        statusCode: 400,
+        message: 'Color Already Exists',
+        error: 'Bad Request',
+        code: 'BAD_REQUEST'
+    },
+    colorNotFound: {
+        statusCode: 404,
+        message: 'Color Not Found',
+        error: 'Not Found',
+        code: 'NOT_FOUND'
+    },
 }
 
 
