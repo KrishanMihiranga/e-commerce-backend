@@ -10,6 +10,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { ColorsModule } from './colors/colors.module';
 import { StockModule } from './stock/stock.module';
 import { SizeModule } from './size/size.module';
+import { OrderModule } from './order/order.module';
 import config from './config/config';
 
 @Module({
@@ -42,7 +43,8 @@ import config from './config/config';
     CategoriesModule,
     ColorsModule,
     StockModule,
-    SizeModule],
+    SizeModule,
+    OrderModule],
   controllers: [AppController],
   providers: [AppService, Logger],
 })

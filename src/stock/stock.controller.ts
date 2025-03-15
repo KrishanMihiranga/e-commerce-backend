@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { StockService } from './stock.service';
 import { StockDto } from './dtos/stock.dto';
 
@@ -30,8 +30,5 @@ export class StockController {
     return this.stockService.delete(slug);
   }
 
-  @Patch('order/:slug')
-  async placeOrder(@Param('slug') slug: string) {
-    return this.stockService.placeOrder(slug);
-  }
+
 }
