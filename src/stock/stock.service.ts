@@ -9,6 +9,8 @@ import { ProductColors } from 'src/colors/schemas/colors.schema';
 import { ProductSize } from 'src/size/schemas/size.schema';
 import { Categories } from 'src/categories/schemas/categories.schema';
 import { SubCategories } from 'src/categories/schemas/sub-categories.schema';
+import { PlaceOrderDto } from '../order/dtos/place-order.dto';
+import { Order } from '../order/schemas/place-order-schema';
 
 @Injectable()
 export class StockService {
@@ -17,7 +19,7 @@ export class StockService {
         @InjectModel(ProductColors.name) private ProductColorsModel: Model<ProductColors>,
         @InjectModel(ProductSize.name) private ProductSizesModel: Model<ProductSize>,
         @InjectModel(Categories.name) private CategoriesModel: Model<Categories>,
-        @InjectModel(SubCategories.name) private SubCategoriesModel: Model<SubCategories>,
+        @InjectModel(SubCategories.name) private SubCategoriesModel: Model<SubCategories>
     ) { }
 
     async getAll() {
@@ -70,16 +72,16 @@ export class StockService {
     }
 
     async create(product: StockDto) {
-       
+
         if (!product.ProductDetails?.length) throw new BadRequestException(errors.productImagesRequired);
         if (!product.ProductDetails.some(detail => detail.Sizes?.length)) throw new BadRequestException(errors.productSizesRequired);
         if (!product.Description?.trim()) throw new BadRequestException(errors.productDescriptionRequired);
 
-      
+
         const colorKeys = product.ProductDetails.map(detail => detail.colorKey);
         const sizes = product.ProductDetails.flatMap(detail => detail.Sizes);
 
-        
+
         const [existingColors, existingSizes, existingCategory, existingSubCategory] = await Promise.all([
             this.ProductColorsModel.find({ key: { $in: colorKeys } }).exec(),
             this.ProductSizesModel.find({ size: { $in: sizes } }).exec(),
@@ -87,15 +89,15 @@ export class StockService {
             this.SubCategoriesModel.findOne({ key: product.subCategoryKey }).exec(),
         ]);
 
-        
+
         const existingColorKeys = new Set(existingColors.map(color => color.key));
         if (colorKeys.some(key => !existingColorKeys.has(key))) throw new BadRequestException(errors.colorNotFound);
 
-        
+
         const existingSizeValues = new Set(existingSizes.map(size => size.size));
         if (sizes.some(size => !existingSizeValues.has(size))) throw new BadRequestException(errors.sizeNotFound);
 
-       
+
         if (!existingCategory) throw new BadRequestException(errors.categoryNotFound);
         if (!existingSubCategory) throw new BadRequestException(errors.categoryNotFound);
 
@@ -180,8 +182,6 @@ export class StockService {
         }
         return { deleted: true };
     }
-    async placeOrder(slug: string) {
-        return `Ordered ${slug}`
-    }
+
 
 }
