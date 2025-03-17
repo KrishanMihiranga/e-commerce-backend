@@ -9,8 +9,6 @@ import { ProductColors } from 'src/colors/schemas/colors.schema';
 import { ProductSize } from 'src/size/schemas/size.schema';
 import { Categories } from 'src/categories/schemas/categories.schema';
 import { SubCategories } from 'src/categories/schemas/sub-categories.schema';
-import { PlaceOrderDto } from '../order/dtos/place-order.dto';
-import { Order } from '../order/schemas/place-order-schema';
 
 @Injectable()
 export class StockService {
@@ -72,15 +70,21 @@ export class StockService {
     }
 
     async create(product: StockDto) {
+        if (!product.productDetails?.length) {
+            throw new BadRequestException(errors.productImagesRequired);
+        }
 
-        if (!product.ProductDetails?.length) throw new BadRequestException(errors.productImagesRequired);
-        if (!product.ProductDetails.some(detail => detail.Sizes?.length)) throw new BadRequestException(errors.productSizesRequired);
-        if (!product.Description?.trim()) throw new BadRequestException(errors.productDescriptionRequired);
+        if (!product.productDetails.some(detail => detail.sizes?.length)) {
+            throw new BadRequestException(errors.productSizesRequired);
+        }
+
+        if (!product.description?.trim()) {
+            throw new BadRequestException(errors.productDescriptionRequired);
+        }
 
 
-        const colorKeys = product.ProductDetails.map(detail => detail.colorKey);
-        const sizes = product.ProductDetails.flatMap(detail => detail.Sizes);
-
+        const colorKeys = product.productDetails.map(detail => detail.colorKey);
+        const sizes = product.productDetails.flatMap(detail => detail.sizes.map(size => size.size));
 
         const [existingColors, existingSizes, existingCategory, existingSubCategory] = await Promise.all([
             this.ProductColorsModel.find({ key: { $in: colorKeys } }).exec(),
@@ -91,33 +95,51 @@ export class StockService {
 
 
         const existingColorKeys = new Set(existingColors.map(color => color.key));
-        if (colorKeys.some(key => !existingColorKeys.has(key))) throw new BadRequestException(errors.colorNotFound);
+        if (colorKeys.some(key => !existingColorKeys.has(key))) {
+            throw new BadRequestException(errors.colorNotFound);
+        }
 
 
         const existingSizeValues = new Set(existingSizes.map(size => size.size));
-        if (sizes.some(size => !existingSizeValues.has(size))) throw new BadRequestException(errors.sizeNotFound);
-
+        if (sizes.some(size => !existingSizeValues.has(size))) {
+            throw new BadRequestException(errors.sizeNotFound);
+        }
 
         if (!existingCategory) throw new BadRequestException(errors.categoryNotFound);
         if (!existingSubCategory) throw new BadRequestException(errors.categoryNotFound);
 
 
-        let baseSlug = slugify(product.name, { lower: true, strict: true });
+        const baseSlug = slugify(product.name, { lower: true, strict: true });
         let slug = baseSlug;
         let count = 1;
-
 
         while (await this.StockModel.exists({ slug })) {
             slug = `${baseSlug}-${count}`;
             count++;
         }
 
-        const newProduct = new this.StockModel({
-            ...product,
-            slug,
-        });
 
-        return newProduct.save();
+        const session = await this.StockModel.startSession();
+        session.startTransaction();
+        try {
+            const newProduct = new this.StockModel({
+                ...product,
+                slug,
+                ProductDetails: product.productDetails
+            });
+
+            await newProduct.save({ session });
+
+
+            await session.commitTransaction();
+            session.endSession();
+
+            return newProduct;
+        } catch (error) {
+            await session.abortTransaction();
+            session.endSession();
+            throw error;
+        }
     }
 
     async updateStock(slug: string, product: StockDto) {
@@ -126,15 +148,18 @@ export class StockService {
             throw new NotFoundException(errors.ProductNotFound);
         }
 
+        if (!product.productDetails?.length) {
+            throw new BadRequestException(errors.productImagesRequired);
+        }
+        if (!product.productDetails.some(detail => detail.sizes?.length)) {
+            throw new BadRequestException(errors.productSizesRequired);
+        }
+        if (!product.description?.trim()) {
+            throw new BadRequestException(errors.productDescriptionRequired);
+        }
 
-        if (!product.ProductDetails?.length) throw new BadRequestException(errors.productImagesRequired);
-        if (!product.ProductDetails.some(detail => detail.Sizes?.length)) throw new BadRequestException(errors.productSizesRequired);
-        if (!product.Description?.trim()) throw new BadRequestException(errors.productDescriptionRequired);
-
-
-        const colorKeys = product.ProductDetails.map(detail => detail.colorKey);
-        const sizes = product.ProductDetails.flatMap(detail => detail.Sizes);
-
+        const colorKeys = product.productDetails.map(detail => detail.colorKey);
+        const sizes = product.productDetails.flatMap(detail => detail.sizes.map(size => size.size));
 
         const [existingColors, existingSizes, existingCategory, existingSubCategory] = await Promise.all([
             this.ProductColorsModel.find({ key: { $in: colorKeys } }).exec(),
@@ -143,17 +168,22 @@ export class StockService {
             this.SubCategoriesModel.findOne({ key: product.subCategoryKey }).exec(),
         ]);
 
-
         const missingColorKeys = colorKeys.filter(key => !existingColors.some(color => color.key === key));
-        if (missingColorKeys.length) throw new BadRequestException(errors.colorNotFound);
+        if (missingColorKeys.length) {
+            throw new BadRequestException(errors.colorNotFound);
+        }
 
         const missingSizes = sizes.filter(size => !existingSizes.some(existing => existing.size === size));
-        if (missingSizes.length) throw new BadRequestException(errors.sizeNotFound);
+        if (missingSizes.length) {
+            throw new BadRequestException(errors.sizeNotFound);
+        }
 
-
-        if (!existingCategory) throw new BadRequestException(errors.categoryNotFound);
-        if (!existingSubCategory) throw new BadRequestException(errors.categoryNotFound);
-
+        if (!existingCategory) {
+            throw new BadRequestException(errors.categoryNotFound);
+        }
+        if (!existingSubCategory) {
+            throw new BadRequestException(errors.categoryNotFound);
+        }
 
         let baseSlug = slugify(product.name, { lower: true, strict: true });
         let newSlug = baseSlug;
@@ -166,13 +196,34 @@ export class StockService {
             }
         }
 
+        const session = await this.StockModel.startSession();
+        session.startTransaction();
+        try {
+            const updatedProduct = await this.StockModel.findOneAndUpdate(
+                { slug },
+                {
+                    ...product,
+                    slug: newSlug,
+                    ProductDetails: product.productDetails.map(detail => ({ ...detail, }))
+                },
+                { new: true, session }
+            ).select('-_id');
+            if (!updatedProduct) {
+                throw new NotFoundException(errors.ProductNotFound);
+            }
 
-        return await this.StockModel.findOneAndUpdate(
-            { slug },
-            { ...product, slug: newSlug },
-            { new: true }
-        ).select('-_id');
+            await session.commitTransaction();
+            session.endSession();
+
+            return updatedProduct;
+        } catch (error) {
+            await session.abortTransaction();
+            session.endSession();
+            throw error;
+        }
     }
+
+
 
     async delete(slug: string) {
         const result = await this.StockModel.deleteOne({ slug }).exec();

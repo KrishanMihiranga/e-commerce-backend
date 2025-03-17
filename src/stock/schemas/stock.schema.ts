@@ -3,7 +3,7 @@ import { Document, Types } from "mongoose";
 import { ProductColors } from "src/colors/schemas/colors.schema";
 import { Type } from "class-transformer";
 
-@Schema()
+@Schema({ _id: false })
 class UrlProps {
     @Prop({ required: true })
     url: string;
@@ -12,7 +12,16 @@ class UrlProps {
     isCover: boolean;
 }
 
-@Schema()
+@Schema({ _id: false })
+class SizeProps {
+    @Prop({ required: true })
+    size: string;
+
+    @Prop({ required: true })
+    qty: number;
+}
+
+@Schema({ _id: false })
 class ProductDetailProps {
     @Prop({ type: Types.ObjectId, required: true })
     @Type(() => ProductColors)
@@ -21,14 +30,11 @@ class ProductDetailProps {
     @Prop({ type: [UrlProps], required: true })
     urls: UrlProps[];
 
-    @Prop({ type: [String], required: true })
-    Sizes: string[];
+    @Prop({ type: [SizeProps], required: true })
+    sizes: SizeProps[];
 
     @Prop({ required: true })
-    Qty: number;
-
-    @Prop({ required: true })
-    Price: number;
+    price: number;
 }
 
 @Schema({ versionKey: false })
@@ -49,10 +55,10 @@ export class Stock extends Document {
     subCategoryKey: string;
 
     @Prop({ required: true })
-    Description: string;
+    description: string;
 
     @Prop({ required: true })
-    IsKokoAvailable: boolean;
+    isKokoAvailable: boolean;
 }
 
 export const StockSchema = SchemaFactory.createForClass(Stock);

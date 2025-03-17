@@ -1,6 +1,12 @@
 import { IsString, IsNumber, IsBoolean, IsArray, ValidateNested, Min } from "class-validator";
 import { Type } from "class-transformer";
 
+class SizeProps {
+    @IsString()
+    size: string;
+    @IsNumber()
+    qty: number;
+}
 
 class UrlProps {
     @IsString()
@@ -17,15 +23,16 @@ class ProductDetailProps {
    
 
     @IsArray()
-    @IsString({ each: true })
-    Sizes: string[];
+    @ValidateNested({ each: true })
+    @Type(() => SizeProps)
+    sizes: SizeProps[];
 
-    @IsNumber()
-    Qty: number;
+    // @IsNumber()
+    // Qty: number;
 
     @IsNumber()
     @Min(1)
-    Price: number;
+    price: number;
 }
 
 export class StockDto {
@@ -35,7 +42,7 @@ export class StockDto {
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => ProductDetailProps)
-    ProductDetails: ProductDetailProps[];
+    productDetails: ProductDetailProps[];
 
     @IsString()
     mainCategoryKey: string;
@@ -44,8 +51,8 @@ export class StockDto {
     subCategoryKey: string;
 
     @IsString()
-    Description: string;
+    description: string;
 
     @IsBoolean()
-    IsKokoAvailable: boolean;
+    isKokoAvailable: boolean;
 }

@@ -2,16 +2,22 @@ import { IsString, IsNumber, IsArray, ValidateNested, Min } from "class-validato
 import { Type } from "class-transformer";
 
 
+class SizeProps {
+    @IsString()
+    size: string;
+    @IsNumber()
+    @Min(1)
+    qty: number;
+}
+
 class qtyDetailsProps {
     @IsString()
     color: string;
 
-    @IsNumber()
-    @Min(1)
-    qty: number;
-
-    @IsString()
-    size: string;
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => SizeProps)
+    sizes: SizeProps[];
 }
 
 export class OrderProps {
