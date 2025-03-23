@@ -20,4 +20,10 @@ export class AppController {
     throw new BadRequestException(errors.validationFailed)
     return { message: 'Accesses resource', userId: req.userId }
   }
+
+  @Get('/health')
+  sHealthRoute(@Req() req) {
+    return { message: 'Accesses resource', userId: req.userId }
+  }
+
 }

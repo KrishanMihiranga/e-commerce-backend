@@ -11,6 +11,13 @@ async function bootstrap() {
   }))
   const loggerInstance = app.get(Logger)
   app.useGlobalFilters(new HttpExceptionFilter(loggerInstance));
+
+  app.enableCors({
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Authorization',
+    credentials: true,
+  })
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
